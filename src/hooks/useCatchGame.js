@@ -1,144 +1,150 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from "react";
 
-const ROUND_SECONDS = 45
-const MAX_MISSES = 6
+const ROUND_SECONDS = 30;
+const MAX_MISSES = 3;
 
-const TARGET_KINDS = ['mint', 'amber', 'coral', 'violet']
+const TARGET_KINDS = ["mint", "amber", "coral", "violet", "blue"];
 
 export function useCatchGame({ isRunning, puckRef, stageRef }) {
-  const animationRef = useRef(0)
-  const bestScoreRef = useRef(0)
-  const gameRef = useRef(createReadyGame())
-  const itemIdRef = useRef(0)
-  const lastFrameRef = useRef(0)
-  const spawnTimerRef = useRef(0)
-  const tickRef = useRef(null)
+  const animationRef = useRef(0);
+  const bestScoreRef = useRef(0);
+  const gameRef = useRef(createReadyGame());
+  const itemIdRef = useRef(0);
+  const lastFrameRef = useRef(0);
+  const spawnTimerRef = useRef(0);
+  const tickRef = useRef(null);
 
-  const [game, setGame] = useState(createReadyGame)
+  const [game, setGame] = useState(createReadyGame);
 
   const commitGame = useCallback((nextGame) => {
-    gameRef.current = nextGame
-    setGame(nextGame)
-  }, [])
+    gameRef.current = nextGame;
+    setGame(nextGame);
+  }, []);
 
   const startRound = useCallback(() => {
     if (!isRunning) {
-      return
+      return;
     }
 
-    itemIdRef.current = 0
-    lastFrameRef.current = 0
-    spawnTimerRef.current = 0
-    commitGame(createPlayingGame(bestScoreRef.current))
-  }, [commitGame, isRunning])
+    itemIdRef.current = 0;
+    lastFrameRef.current = 0;
+    spawnTimerRef.current = 0;
+    commitGame(createPlayingGame(bestScoreRef.current));
+  }, [commitGame, isRunning]);
 
   const resetRound = useCallback(() => {
-    itemIdRef.current = 0
-    lastFrameRef.current = 0
-    spawnTimerRef.current = 0
-    commitGame(createReadyGame(bestScoreRef.current))
-  }, [commitGame])
+    itemIdRef.current = 0;
+    lastFrameRef.current = 0;
+    spawnTimerRef.current = 0;
+    commitGame(createReadyGame(bestScoreRef.current));
+  }, [commitGame]);
 
   const tick = useCallback(
     (timestamp) => {
-      const currentGame = gameRef.current
+      const currentGame = gameRef.current;
 
-      if (!isRunning || currentGame.status !== 'playing') {
-        return
+      if (!isRunning || currentGame.status !== "playing") {
+        return;
       }
 
-      const lastFrame = lastFrameRef.current || timestamp
-      const deltaSeconds = Math.min((timestamp - lastFrame) / 1000, 0.05)
-      lastFrameRef.current = timestamp
+      const lastFrame = lastFrameRef.current || timestamp;
+      const deltaSeconds = Math.min((timestamp - lastFrame) / 1000, 0.05);
+      lastFrameRef.current = timestamp;
 
-      const stageSize = getStageSize(stageRef.current)
-      const puck = getPuckShape(puckRef.current, stageSize)
-      const nextItems = []
-      let caught = currentGame.caught
-      let missed = currentGame.missed
-      let score = currentGame.score
-      let streak = currentGame.streak
+      const stageSize = getStageSize(stageRef.current);
+      const puck = getPuckShape(puckRef.current, stageSize);
+      const nextItems = [];
+      let caught = currentGame.caught;
+      let missed = currentGame.missed;
+      let score = currentGame.score;
+      let streak = currentGame.streak;
 
       for (const item of currentGame.items) {
         const nextItem = {
           ...item,
           y: item.y + item.speed * deltaSeconds,
           spin: item.spin + item.spinSpeed * deltaSeconds,
-        }
+        };
 
         if (puck && isItemCaught(nextItem, puck, stageSize)) {
-          caught += 1
-          streak += 1
-          score += 10 + Math.min(streak, 6) * 3
+          caught += 1;
+          if (nextItem.kind === "poison") {
+            score = Math.max(0, score - 15);
+            streak = 0;
+          } else {
+            streak += 1;
+            score += 10 + Math.min(streak, 10) * 5;
+          }
         } else if (nextItem.y > 1.12) {
-          missed += 1
-          streak = 0
+          missed += 1;
+          streak = 0;
         } else {
-          nextItems.push(nextItem)
+          nextItems.push(nextItem);
         }
       }
 
-      spawnTimerRef.current -= deltaSeconds
+      spawnTimerRef.current -= deltaSeconds;
 
       if (spawnTimerRef.current <= 0 && currentGame.timeLeft > 1) {
-        nextItems.push(createCatchItem(itemIdRef.current, currentGame))
-        itemIdRef.current += 1
-        spawnTimerRef.current = getSpawnDelay(currentGame)
+        nextItems.push(createCatchItem(itemIdRef.current, currentGame));
+        itemIdRef.current += 1;
+        spawnTimerRef.current = getSpawnDelay(currentGame);
       }
 
-      const timeLeft = Math.max(0, currentGame.timeLeft - deltaSeconds)
-      const status = timeLeft <= 0 || missed >= MAX_MISSES ? 'finished' : 'playing'
-      const bestScore = Math.max(bestScoreRef.current, score)
-      bestScoreRef.current = bestScore
+      const timeLeft = Math.max(0, currentGame.timeLeft - deltaSeconds);
+      const status =
+        timeLeft <= 0 || missed >= MAX_MISSES ? "finished" : "playing";
+      const bestScore = Math.max(bestScoreRef.current, score);
+      bestScoreRef.current = bestScore;
 
       commitGame({
         ...currentGame,
         bestScore,
         caught,
-        items: status === 'playing' ? nextItems : [],
+        items: status === "playing" ? nextItems : [],
         missed,
         score,
         status,
         streak,
         timeLeft,
-      })
+      });
 
-      if (status === 'playing' && tickRef.current) {
-        animationRef.current = requestAnimationFrame(tickRef.current)
+      if (status === "playing" && tickRef.current) {
+        animationRef.current = requestAnimationFrame(tickRef.current);
       }
     },
-    [commitGame, isRunning, puckRef, stageRef]
-  )
+    [commitGame, isRunning, puckRef, stageRef],
+  );
 
   useEffect(() => {
-    tickRef.current = tick
-  }, [tick])
+    tickRef.current = tick;
+  }, [tick]);
 
   useEffect(() => {
     if (!isRunning) {
-      cancelAnimationFrame(animationRef.current)
-      resetRound()
+      cancelAnimationFrame(animationRef.current);
+      resetRound();
     }
-  }, [isRunning, resetRound])
+  }, [isRunning, resetRound]);
 
   useEffect(() => {
-    if (!isRunning || game.status !== 'playing') {
-      return undefined
+    if (!isRunning || game.status !== "playing") {
+      return undefined;
     }
 
-    cancelAnimationFrame(animationRef.current)
-    animationRef.current = requestAnimationFrame(tick)
+    cancelAnimationFrame(animationRef.current);
+    animationRef.current = requestAnimationFrame(tick);
 
     return () => {
-      cancelAnimationFrame(animationRef.current)
-    }
-  }, [game.status, isRunning, tick])
+      cancelAnimationFrame(animationRef.current);
+    };
+  }, [game.status, isRunning, tick]);
 
   return {
     game,
     resetRound,
     startRound,
-  }
+  };
 }
 
 function createReadyGame(bestScore = 0) {
@@ -150,76 +156,84 @@ function createReadyGame(bestScore = 0) {
     missed: 0,
     roundSeconds: ROUND_SECONDS,
     score: 0,
-    status: 'ready',
+    status: "ready",
     streak: 0,
     timeLeft: ROUND_SECONDS,
-  }
+  };
 }
 
 function createPlayingGame(bestScore = 0) {
   return {
     ...createReadyGame(bestScore),
-    status: 'playing',
-  }
+    status: "playing",
+  };
 }
 
 function createCatchItem(id, game) {
-  const paceBoost = Math.min(game.caught * 0.006, 0.13)
+  const paceBoost = Math.min(game.caught * 0.006, 0.13);
+  const kind =
+    Math.random() < 0.2 ? "poison" : TARGET_KINDS[id % TARGET_KINDS.length];
+  const level = Math.floor((ROUND_SECONDS - game.timeLeft) / 10);
+  const levelBoost = level * 0.05;
 
   return {
     id,
-    kind: TARGET_KINDS[id % TARGET_KINDS.length],
-    size: randomBetween(34, 54),
-    speed: randomBetween(0.18 + paceBoost, 0.28 + paceBoost),
+    kind,
+    size: randomBetween(50, 68),
+    speed: randomBetween(
+      0.18 + paceBoost + levelBoost,
+      0.28 + paceBoost + levelBoost,
+    ),
     spin: randomBetween(-18, 18),
     spinSpeed: randomBetween(-120, 120),
     x: randomBetween(0.09, 0.91),
     y: -0.1,
-  }
+  };
 }
 
 function getSpawnDelay(game) {
-  const baseDelay = Math.max(0.42, 0.82 - game.caught * 0.012)
+  const level = Math.floor((ROUND_SECONDS - game.timeLeft) / 10);
+  const baseDelay = Math.max(0.28, 0.82 - game.caught * 0.012 - level * 0.08);
 
-  return randomBetween(baseDelay, baseDelay + 0.32)
+  return randomBetween(baseDelay, baseDelay + 0.32);
 }
 
 function getStageSize(stage) {
-  const bounds = stage?.getBoundingClientRect()
+  const bounds = stage?.getBoundingClientRect();
 
   return {
     height: bounds?.height || 540,
     width: bounds?.width || 960,
-  }
+  };
 }
 
 function getPuckShape(puck, stageSize) {
-  const x = Number(puck?.dataset.x)
-  const y = Number(puck?.dataset.y)
+  const x = Number(puck?.dataset.x);
+  const y = Number(puck?.dataset.y);
 
   if (!Number.isFinite(x) || !Number.isFinite(y)) {
-    return null
+    return null;
   }
 
-  const scale = Number(puck?.style.getPropertyValue('--scale')) || 1
-  const size = (puck?.offsetWidth || 72) * scale
+  const scale = Number(puck?.style.getPropertyValue("--scale")) || 1;
+  const size = (puck?.offsetWidth || 72) * scale;
 
   return {
     radius: size * 0.48,
     x: x * stageSize.width,
     y: y * stageSize.height,
-  }
+  };
 }
 
 function isItemCaught(item, puck, stageSize) {
-  const itemX = item.x * stageSize.width
-  const itemY = item.y * stageSize.height
-  const itemRadius = item.size * 0.38
-  const distance = Math.hypot(itemX - puck.x, itemY - puck.y)
+  const itemX = item.x * stageSize.width;
+  const itemY = item.y * stageSize.height;
+  const itemRadius = item.size * 0.38;
+  const distance = Math.hypot(itemX - puck.x, itemY - puck.y);
 
-  return distance <= puck.radius + itemRadius
+  return distance <= puck.radius + itemRadius;
 }
 
 function randomBetween(min, max) {
-  return min + Math.random() * (max - min)
+  return min + Math.random() * (max - min);
 }

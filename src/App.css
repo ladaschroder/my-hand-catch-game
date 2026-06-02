@@ -89,8 +89,7 @@ h1 {
   border-radius: 8px;
   background:
     linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    #151514;
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px), #151514;
   background-size: 36px 36px;
   box-shadow: var(--shadow);
 }
@@ -127,46 +126,23 @@ h1 {
   top: var(--y);
   width: var(--size);
   aspect-ratio: 1;
-  border: 2px solid rgba(255, 255, 255, 0.78);
-  border-radius: 50% 50% 44% 56%;
   display: grid;
   place-items: center;
-  box-shadow:
-    0 12px 24px rgba(0, 0, 0, 0.28),
-    inset 0 -10px 18px rgba(0, 0, 0, 0.18);
   transform: translate(-50%, -50%) rotate(var(--spin));
   will-change: left, top, transform;
 }
 
 .catch-target::before {
-  content: "";
-  position: absolute;
-  inset: 18% 48% 52% 18%;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
+  display: none;
 }
 
 .catch-target span {
-  width: 36%;
+  width: 100%;
   aspect-ratio: 1;
-  border: 2px solid rgba(255, 255, 255, 0.56);
-  border-radius: 999px;
-}
-
-.catch-target.is-mint {
-  background: linear-gradient(135deg, #9af6d8, #1fbba6 58%, #117f76);
-}
-
-.catch-target.is-amber {
-  background: linear-gradient(135deg, #ffe2a7, #f3a72e 58%, #b96716);
-}
-
-.catch-target.is-coral {
-  background: linear-gradient(135deg, #ffb09e, #f06a57 58%, #b83838);
-}
-
-.catch-target.is-violet {
-  background: linear-gradient(135deg, #d8c2ff, #8467d7 58%, #4c3a95);
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--size) * 0.85);
+  line-height: 1;
 }
 
 .control-object {
@@ -182,10 +158,11 @@ h1 {
   width: clamp(54px, 7vw, 86px);
   aspect-ratio: 1;
   border: 2px solid rgba(255, 255, 255, 0.86);
-  border-radius: 999px 999px 46% 46%;
+  border-radius: 40px;
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.72), transparent 38%),
-    linear-gradient(135deg, var(--teal), var(--coral));
+    linear-gradient(135deg, rgba(83, 217, 105, 0.72), transparent 38%),
+    linear-gradient(135deg, rgb(240, 29, 64), transparent),
+    rgba(31, 49, 187, 0.799);
   box-shadow:
     0 18px 36px rgba(0, 0, 0, 0.36),
     0 0 0 9px rgba(41, 210, 178, 0.14);

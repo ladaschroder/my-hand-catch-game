@@ -8,7 +8,7 @@ const LANDMARK = {
   RING_BASE: 13,
   RING_TIP: 16,
   PINKY_BASE: 17,
-  PINKY_TIP: 20
+  PINKY_TIP: 20,
 };
 
 export function getHandGesture(landmarks) {
@@ -30,7 +30,7 @@ export function getHandGesture(landmarks) {
     isPinching,
     isPointingUp,
     name: getGestureName({ isPinching, isPointingUp, openFingerCount }),
-    rotation: clamp((middleBase.x - wrist.x) * -115, -34, 34)
+    rotation: clamp((middleBase.x - wrist.x) * -115, -34, 34),
   };
 }
 
@@ -45,15 +45,15 @@ export function movePuckWithGesture(gesture, puck) {
       y: targetY,
       scale,
       rotation: gesture.rotation,
-      isGripped: gesture.isPinching
+      isGripped: gesture.isPinching,
     },
-    puck
+    puck,
   );
 }
 
 export function movePuckToPoint(
   { x, y, scale = 1, rotation = 0, isGripped = false },
-  puck
+  puck,
 ) {
   if (!puck) {
     return;
@@ -61,8 +61,8 @@ export function movePuckToPoint(
 
   const currentX = Number(puck.dataset.x) || 0.5;
   const currentY = Number(puck.dataset.y) || 0.5;
-  const nextX = currentX + (clamp(x, 0.03, 0.97) - currentX) * 0.26;
-  const nextY = currentY + (clamp(y, 0.06, 0.94) - currentY) * 0.26;
+  const nextX = currentX + (clamp(x, 0.03, 0.97) - currentX) * 0.45;
+  const nextY = currentY + (clamp(y, 0.06, 0.94) - currentY) * 0.45;
 
   puck.dataset.x = String(nextX);
   puck.dataset.y = String(nextY);
@@ -95,7 +95,7 @@ function countOpenFingers(landmarks) {
     landmarks[LANDMARK.INDEX_TIP].y < landmarks[LANDMARK.INDEX_BASE].y,
     landmarks[LANDMARK.MIDDLE_TIP].y < landmarks[LANDMARK.MIDDLE_BASE].y,
     landmarks[LANDMARK.RING_TIP].y < landmarks[LANDMARK.RING_BASE].y,
-    landmarks[LANDMARK.PINKY_TIP].y < landmarks[LANDMARK.PINKY_BASE].y
+    landmarks[LANDMARK.PINKY_TIP].y < landmarks[LANDMARK.PINKY_BASE].y,
   ];
 
   return openFingers.filter(Boolean).length;

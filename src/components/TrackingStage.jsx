@@ -1,6 +1,15 @@
 import Webcam from "react-webcam";
 import { VIDEO_CONSTRAINTS } from "../handTracking";
 
+const ITEM_EMOJI = {
+  mint: "⭐",
+  amber: "💎",
+  coral: "🌺",
+  violet: "🔮",
+  blue: "❄️",
+  poison: "☠️",
+};
+
 export function TrackingStage({
   canvasRef,
   game,
@@ -63,7 +72,7 @@ export function TrackingStage({
               "--y": `${item.y * 100}%`
             }}
           >
-            <span></span>
+            <span>{ITEM_EMOJI[item.kind]}</span>
           </div>
         ))}
       </div>
